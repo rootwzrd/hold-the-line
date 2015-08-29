@@ -9,7 +9,7 @@
 __author__ = 'vitorio'
 
 from gevent.wsgi import WSGIServer
-from screener import app
+from holdtheline import app
 
 http_server = WSGIServer(('', 5500), app)
 http_server.serve_forever()
