@@ -1,0 +1,12 @@
+[Unit]
+Description=hold-the-line
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/holdplz/hold-the-line
+ExecStart=/usr/bin/python holdtheline-server.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
