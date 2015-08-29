@@ -1,0 +1,8 @@
+[holdtheline]
+twilio_outgoing_message = http://example.com/voicemail.mp3
+blocked_numbers = +17895551212,+19875551212
+line_email = to_address@example.com
+mandrill_api = abcdefghijklmnop
+mandrill_email = from_address@example.com
+twilio_account_sid = qwertyuiopgfdsa
+twilio_auth_token = zxcvbnmlkjh
