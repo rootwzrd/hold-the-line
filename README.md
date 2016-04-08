@@ -2,7 +2,7 @@
 
 hold-the-line - Simple Python voicemail and SMS/MMS receiver for holding onto phone numbers in Twilio
 
-Written in 2015 by Vitorio Miliano <http://vitor.io/>
+Written in 2015 and 2016 by Vitorio Miliano <http://vitor.io/>
 
 To the extent possible under law, the author has dedicated all copyright and related and neighboring rights to this software to the public domain worldwide.  This software is distributed without any warranty.
 

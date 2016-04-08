@@ -1,8 +1,16 @@
 [holdtheline]
 twilio_outgoing_message = http://example.com/voicemail.mp3
 blocked_numbers = +17895551212,+19875551212
-line_email = to_address@example.com
-mandrill_api = abcdefghijklmnop
-mandrill_email = from_address@example.com
+to_email = to_address@example.com
+from_email = from_address@example.com
 twilio_account_sid = qwertyuiopgfdsa
 twilio_auth_token = zxcvbnmlkjh
+
+# this can be any single valid marrow.mailer transport dict
+[marrow.mailer]
+use = smtp
+tls = required
+port = 587
+username = from_address@example.com
+password = mnbvcxzlkjhgfdsa
+host = smtp.example.com

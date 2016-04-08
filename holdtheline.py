@@ -10,20 +10,20 @@ from flask import Flask, request, redirect
 import twilio.twiml
 import twilio.rest
 import ConfigParser
-import mandrill
+import marrow.mailer
+import sys
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('holdtheline.cfg'))
 twilio_outgoing_message = config.get('holdtheline', 'twilio_outgoing_message')
 blocked_numbers = config.get('holdtheline', 'blocked_numbers').split(',')
-line_email = config.get('holdtheline', 'line_email')
-mandrill_api = config.get('holdtheline', 'mandrill_api')
-mandrill_email = config.get('holdtheline', 'mandrill_email')
+to_email = config.get('holdtheline', 'to_email')
+from_email = config.get('holdtheline', 'from_email')
 twilio_account_sid = config.get('holdtheline', 'twilio_account_sid')
 twilio_auth_token = config.get('holdtheline', 'twilio_auth_token')
 
 twilioclient = twilio.rest.TwilioRestClient(twilio_account_sid, twilio_auth_token)
-mandrillclient = mandrill.Mandrill(mandrill_api)
+mailer = marrow.mailer.Mailer(dict(transport = dict(config.items('marrow.mailer'))))
 
 app = Flask(__name__)
 
@@ -60,13 +60,15 @@ def handle_text():
 '''.format(to_number, from_number, sms_body)
     
     try:
-        message = {'to': [{'email': line_email}],
-                   'from_email': mandrill_email,
-                   'subject': '[hold-the-line] {} has a text from {}'.format(to_number, from_number),
-                   'text': mail_text}
-        result = mandrillclient.messages.send(message=message)
-    except mandrill.Error, e:
-        print 'A mandrill error occurred: %s - %s' % (e.__class__, e)
+        mailer.start()
+        message = marrow.mailer.Message(author=from_email, to=to_email)
+        message.subject = '[hold-the-line] {} has a text from {}'.format(to_number, from_number)
+        message.plain = mail_text
+        mailer.send(message)
+        mailer.stop()
+    except:
+        e = sys.exc_info()
+        print 'A mailer error occurred: %s - %s' % (e[0], e[1])
         raise
 
     resp = twilio.twiml.Response()
@@ -100,13 +102,15 @@ Recording: {}
 """.format(request.values.get('TranscriptionText', None))
     
     try:
-        message = {'to': [{'email': line_email}],
-                   'from_email': mandrill_email,
-                   'subject': '[hold-the-line] {} has voicemail from {}'.format(to_number, from_number),
-                   'text': mail_text}
-        result = mandrillclient.messages.send(message=message)
-    except mandrill.Error, e:
-        print 'A mandrill error occurred: %s - %s' % (e.__class__, e)
+        mailer.start()
+        message = marrow.mailer.Message(author=from_email, to=to_email)
+        message.subject = '[hold-the-line] {} has voicemail from {}'.format(to_number, from_number)
+        message.plain = mail_text
+        mailer.send(message)
+        mailer.stop()
+    except:
+        e = sys.exc_info()
+        print 'A mailer error occurred: %s - %s' % (e[0], e[1])
         raise
     
     resp = twilio.twiml.Response()
