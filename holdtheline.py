@@ -1,10 +1,16 @@
-## hold-the-line - Simple Python voicemail and SMS/MMS receiver for holding onto phone numbers in Twilio
+## hold-the-line - Simple Python voicemail and SMS/MMS receiver
+##                 for holding onto phone numbers in Twilio
 ## 
 ## Written in 2015 and 2016 by Vitorio Miliano <http://vitor.io/>
 ## 
-## To the extent possible under law, the author has dedicated all copyright and related and neighboring rights to this software to the public domain worldwide.  This software is distributed without any warranty.
+## To the extent possible under law, the author has dedicated all
+## copyright and related and neighboring rights to this software
+## to the public domain worldwide.  This software is distributed
+## without any warranty.
 ## 
-## You should have received a copy of the CC0 Public Domain Dedication along with this software.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+## You should have received a copy of the CC0 Public Domain
+## Dedication along with this software.  If not, see
+## <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 from flask import Flask, request, redirect
 import twilio.twiml
@@ -12,6 +18,8 @@ import twilio.rest
 import ConfigParser
 import marrow.mailer
 import sys
+import json
+import phonenumbers
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('holdtheline.cfg'))
@@ -31,14 +39,43 @@ app = Flask(__name__)
 def handle_call():
     """When someone other than me dials in"""
     from_number = request.values.get('From', None)
+    addons = request.values.get('AddOns', None)
 
-    resp = twilio.twiml.Response()
+    reject = False
+
+    marchex = json.load(addons)
+    if 'code' in marchex:
+        if marchex['code'] == None:
+            if 'marchex_cleancall' in marchex['results']:
+                if 'status' in marchex['results']['marchex_cleancall']:
+                    if marchex['results']['marchex_cleancall']['status'] == 'successful':
+                        if marchex['results']['marchex_cleancall']['result']['result']['recommendation'] == 'BLOCK':
+                            reject = True
+                            
+    try:
+        gp = phonenumbers.parse(from_number)
+    except:
+        reject = True
+    else:
+        if phonenumbers.is_possible_number(gp):
+            if phonenumbers.is_valid_number(gp):
+                if gp.country_code == 1:
+                    gpi = int(str(gp.national_number)[phonenumbers.phonenumberutil.length_of_national_destination_code(gp):])
+                    if gpi >= 5550100 or gpi <= 5550199:
+                        reject = True
+            else:
+                reject = True
+        else:
+            reject = True
+            
     if from_number in blocked_numbers:
+        reject = True
+        
+    resp = twilio.twiml.Response()
+    if reject:
         resp.reject()
     else:
-        resp.play(twilio_outgoing_message) # This audio file has a beep in it already
-        resp.record(maxLength="300", playBeep=False, action="/voicemail", transcribe=True, transcribeCallback="/transcription")
-        resp.say("Sorry, I couldn't hear your message.  Please try your call again later.")
+        resp.redirect(call_redirect)
         
     return str(resp)
 
