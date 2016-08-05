@@ -1,8 +1,16 @@
 [holdtheline]
-twilio_outgoing_message = http://example.com/voicemail.mp3
+call_redirect = http://example.com/call.twiml
+button_selection = 1
+button_redirect = http://example.com/buttonredirect.twiml
+buttonretry1_redirect = http://example.com/buttonretry1.twiml
+buttonretry2_redirect = http://example.com/buttonretry2.twiml
+buttonretry3_redirect = http://example.com/buttonretry3.twiml
 blocked_numbers = +17895551212,+19875551212
 to_email = to_address@example.com
 from_email = from_address@example.com
+text_subject = [hold-the-line] {to_num} has a text from {from_num}
+text_autoresponse = 
+voicemail_subject = [hold-the-line] {to_num} has a voicemail from {from_num}
 twilio_account_sid = qwertyuiopgfdsa
 twilio_auth_token = zxcvbnmlkjh
 
