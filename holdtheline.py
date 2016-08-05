@@ -99,7 +99,7 @@ def handle_text():
         to_number = request.values.get('To', None)
         sms_body = request.values.get('Body', None)
         mms = request.values.get('NumMedia', None)
-        mail_text = '''{} has a new text from {}.
+        mail_text = u'''{} has a new text from {}.
 
 {}
 
