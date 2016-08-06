@@ -33,6 +33,7 @@ BUTTONRETRY3_REDIRECT = config.get('holdtheline', 'buttonretry3_redirect')
 TO_EMAIL = config.get('holdtheline', 'to_email')
 FROM_EMAIL = config.get('holdtheline', 'from_email')
 TEXT_SUBJECT = config.get('holdtheline', 'text_subject')
+TEXT_AUTORESPONSE = config.get('holdtheline', 'text_autoresponse')
 VOICEMAIL_SUBJECT = config.get('holdtheline', 'voicemail_subject')
 TWILIO_ACCOUNT_SID = config.get('holdtheline', 'twilio_account_sid')
 TWILIO_AUTH_TOKEN = config.get('holdtheline', 'twilio_auth_token')
@@ -58,14 +59,11 @@ def pass_number(number, addons):
     except:
         passnum = False
     else:
-        if phonenumbers.is_possible_number(gp):
-            if phonenumbers.is_valid_number(gp):
-                if gp.country_code == 1:
-                    gpi = int(str(gp.national_number)[phonenumbers.phonenumberutil.length_of_national_destination_code(gp):])
-                    if gpi >= 5550100 and gpi <= 5550199:
-                        passnum = False
-            else:
-                passnum = False
+        if phonenumbers.is_possible_number(gp) and phonenumbers.is_valid_number(gp):
+            if gp.country_code == 1:
+                gpi = int(str(gp.national_number)[phonenumbers.phonenumberutil.length_of_national_destination_code(gp):])
+                if gpi >= 5550100 and gpi <= 5550199:
+                    passnum = False
         else:
             passnum = False
             
@@ -126,6 +124,10 @@ def handle_text():
             raise
 
     resp = twilio.twiml.Response()
+    
+    if TEXT_AUTORESPONSE:
+        resp.message(unicode(TEXT_AUTORESPONSE, 'utf-8'))
+        
     return str(resp)
 
 @app.route("/transcription", methods=['GET', 'POST'])
@@ -136,14 +138,14 @@ def handle_transcription():
     voicemail = request.values.get('RecordingUrl', None)
     transcript_status = request.values.get('TranscriptionStatus', None)
     
-    mail_text = '''{} has a new voicemail from {}.
+    mail_text = u'''{} has a new voicemail from {}.
 
 Recording: {}
 
 '''.format(to_number, from_number, voicemail)
     
     if (transcript_status == "completed"):
-        mail_text = mail_text + """Transcription:
+        mail_text = mail_text + u"""Transcription:
 
 {}
 """.format(request.values.get('TranscriptionText', None))
