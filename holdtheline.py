@@ -1,7 +1,7 @@
 ## hold-the-line - Simple Python voicemail and SMS/MMS receiver
 ##                 for holding onto phone numbers in Twilio
 ## 
-## Written in 2015 and 2016 by Vitorio Miliano <http://vitor.io/>
+## Written in 2015 and 2016 and 2017 by Vitorio Miliano <http://vitor.io/>
 ## 
 ## To the extent possible under law, the author has dedicated all
 ## copyright and related and neighboring rights to this software
@@ -12,9 +12,10 @@
 ## Dedication along with this software.  If not, see
 ## <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, abort
 import twilio.twiml
 import twilio.rest
+import twilio.util
 import ConfigParser
 import marrow.mailer
 import sys
@@ -39,6 +40,7 @@ TWILIO_ACCOUNT_SID = config.get('holdtheline', 'twilio_account_sid')
 TWILIO_AUTH_TOKEN = config.get('holdtheline', 'twilio_auth_token')
 
 twilioclient = twilio.rest.TwilioRestClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+validator = twilio.util.RequestValidator(TWILIO_AUTH_TOKEN)
 mailer = marrow.mailer.Mailer(dict(transport = dict(config.items('marrow.mailer'))))
 
 app = Flask(__name__)
@@ -75,9 +77,12 @@ def pass_number(number, addons):
 @app.route("/call", methods=['GET', 'POST'])
 def handle_call():
     """Check number validity and redirect or reject"""
+    if not validator.validate(request.url, request.form, request.headers.get('X-Twilio-Signature', '')):
+        abort(403)
+    
     from_number = request.values.get('From', None)
     addons = request.values.get('AddOns', None)
-
+    
     resp = twilio.twiml.Response()
     
     if pass_number(from_number, addons):
@@ -90,9 +95,12 @@ def handle_call():
 @app.route("/text", methods=['GET', 'POST'])
 def handle_text():
     """Check number validity and reject or send email"""
+    if not validator.validate(request.url, request.form, request.headers.get('X-Twilio-Signature', '')):
+        abort(403)
+    
     from_number = request.values.get('From', None)
     addons = request.values.get('AddOns', None)
-        
+    
     if pass_number(from_number, addons):
         to_number = request.values.get('To', None)
         sms_body = request.values.get('Body', None)
@@ -133,6 +141,9 @@ def handle_text():
 @app.route("/transcription", methods=['GET', 'POST'])
 def handle_transcription():
     """Notify via email"""
+    if not validator.validate(request.url, request.form, request.headers.get('X-Twilio-Signature', '')):
+        abort(403)
+    
     from_number = request.values.get('From', None)
     to_number = request.values.get('To', None)
     voicemail = request.values.get('RecordingUrl', None)
@@ -169,6 +180,9 @@ Recording: {}
 @app.route('/button', methods=['GET', 'POST'])
 def handle_button():
     """Route based on a single button selection"""
+    if not validator.validate(request.url, request.form, request.headers.get('X-Twilio-Signature', '')):
+        abort(403)
+    
     digit_pressed = request.values.get('Digits', None)
     retry_time = request.values.get('Retry', None)
     

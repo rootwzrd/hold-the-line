@@ -1,4 +1,0 @@
-/var/log/hold-the-line.log {
-  copytruncate
-  notifempty
-}
